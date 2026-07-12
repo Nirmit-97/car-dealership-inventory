@@ -30,32 +30,38 @@ public class DatabaseSeeder implements CommandLineRunner {
 
     @Override
     public void run(String... args) {
-        // Only seed if the database is completely empty
-        if (userRepository.count() == 0 && vehicleRepository.count() == 0) {
-            log.info("Database is empty. Starting seeding process...");
-            seedUsers();
+        log.info("Checking seeded database users...");
+        ensureUserExists("admin@dealer.com", "password", Role.ADMIN);
+        ensureUserExists("user@dealer.com", "password", Role.USER);
+
+        if (vehicleRepository.count() == 0) {
+            log.info("Vehicle inventory is empty. Seeding demo vehicles...");
             seedVehicles();
-            log.info("Database seeding completed successfully.");
+            log.info("Database vehicle seeding completed.");
         } else {
-            log.info("Database already contains data. Seeding skipped.");
+            log.info("Vehicle inventory contains data. Vehicle seeding skipped.");
         }
     }
 
-    private void seedUsers() {
-        User admin = User.builder()
-                .email("admin@dealer.com")
-                .password(passwordEncoder.encode("password"))
-                .role(Role.ADMIN)
-                .build();
-
-        User user = User.builder()
-                .email("user@dealer.com")
-                .password(passwordEncoder.encode("password"))
-                .role(Role.USER)
-                .build();
-
-        userRepository.saveAll(List.of(admin, user));
-        log.info("Seeded Admin and User accounts.");
+    private void ensureUserExists(String email, String rawPassword, Role role) {
+        userRepository.findByEmail(email).ifPresentOrElse(
+            user -> {
+                if (user.getRole() != role) {
+                    user.setRole(role);
+                    userRepository.save(user);
+                    log.info("Updated existing user {} to role {}", email, role);
+                }
+            },
+            () -> {
+                User newUser = User.builder()
+                        .email(email)
+                        .password(passwordEncoder.encode(rawPassword))
+                        .role(role)
+                        .build();
+                userRepository.save(newUser);
+                log.info("Seeded new user Account {} with role {}", email, role);
+            }
+        );
     }
 
     private void seedVehicles() {
