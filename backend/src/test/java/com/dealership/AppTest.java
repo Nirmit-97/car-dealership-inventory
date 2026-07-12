@@ -1,20 +1,9 @@
 package com.dealership;
 
-import static org.junit.Assert.assertTrue;
-
-import org.junit.Test;
-
 /**
- * Unit test for simple App.
+ * Placeholder test class — replaced by focused unit tests in each package.
+ * See: auth/AuthServiceTest, vehicle/VehicleServiceTest, inventory/InventoryServiceTest
  */
-public class AppTest 
-{
-    /**
-     * Rigorous Test :-)
-     */
-    @Test
-    public void shouldAnswerWithTrue()
-    {
-        assertTrue( true );
-    }
+class AppTest {
+    // All tests are organized by feature package
 }
