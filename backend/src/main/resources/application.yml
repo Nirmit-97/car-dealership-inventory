@@ -1,0 +1,57 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: car-dealership-backend
+
+  # ===== Database =====
+  datasource:
+    url: ${DATABASE_URL:jdbc:postgresql://localhost:5432/dealership}
+    driver-class-name: org.postgresql.Driver
+    # USERNAME and PASSWORD come from DATABASE_URL on Neon (embedded in URL)
+    # For local dev, set DATABASE_URL in .env or below:
+    username: ${DB_USERNAME:postgres}
+    password: ${DB_PASSWORD:postgres}
+
+  jpa:
+    hibernate:
+      # update = auto-creates/updates tables — safe for dev
+      # validate = use in production
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+
+  # ===== Disable Spring Security auto-config password log =====
+  security:
+    user:
+      password: disabled
+
+# ===== JWT Configuration =====
+jwt:
+  secret: ${JWT_SECRET:404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970}
+  expiration: 86400000  # 24 hours in milliseconds
+
+# ===== CORS — allow frontend origin =====
+cors:
+  allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:5173}
+
+---
+# ===== TEST profile — uses H2 in-memory DB =====
+spring:
+  config:
+    activate:
+      on-profile: test
+  datasource:
+    url: jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    database-platform: org.hibernate.dialect.H2Dialect
+    show-sql: false
