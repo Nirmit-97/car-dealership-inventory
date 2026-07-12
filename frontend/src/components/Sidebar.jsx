@@ -1,7 +1,7 @@
 import { useAuth } from '../context/AuthContext';
 import { useNavigate, useLocation } from 'react-router-dom';
 
-export default function Sidebar() {
+export default function Sidebar({ onClose }) {
   const { user, logout, isAdmin } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -9,6 +9,12 @@ export default function Sidebar() {
   const handleLogout = () => {
     logout();
     navigate('/login');
+    if (onClose) onClose();
+  };
+
+  const handleNav = (path) => {
+    navigate(path);
+    if (onClose) onClose();
   };
 
   const navItems = [
@@ -29,7 +35,7 @@ export default function Sidebar() {
           key={item.path}
           id={`nav-${item.label.toLowerCase().replace(' ', '-')}`}
           className={`nav-item ${location.pathname === item.path ? 'active' : ''}`}
-          onClick={() => navigate(item.path)}
+          onClick={() => handleNav(item.path)}
         >
           <span>{item.icon}</span>
           {item.label}

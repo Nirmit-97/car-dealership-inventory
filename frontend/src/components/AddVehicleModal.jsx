@@ -1,14 +1,28 @@
-import { useState } from 'react';
-import { createVehicle } from '../api/vehicles';
+import { useState, useEffect } from 'react';
+import { createVehicle, updateVehicle } from '../api/vehicles';
 
 const CATEGORIES = ['Sedan', 'SUV', 'Coupe', 'Truck', 'Hatchback', 'Electric', 'Convertible', 'Van'];
 
-export default function AddVehicleModal({ onClose, onAdded }) {
+export default function AddVehicleModal({ onClose, onAdded, editingVehicle }) {
   const [form, setForm] = useState({
     make: '', model: '', category: 'Sedan', price: '', quantity: '',
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+
+  const isEdit = !!editingVehicle;
+
+  useEffect(() => {
+    if (editingVehicle) {
+      setForm({
+        make: editingVehicle.make || '',
+        model: editingVehicle.model || '',
+        category: editingVehicle.category || 'Sedan',
+        price: editingVehicle.price !== undefined ? editingVehicle.price : '',
+        quantity: editingVehicle.quantity !== undefined ? editingVehicle.quantity : '',
+      });
+    }
+  }, [editingVehicle]);
 
   const handle = (e) => setForm({ ...form, [e.target.name]: e.target.value });
 
@@ -17,14 +31,20 @@ export default function AddVehicleModal({ onClose, onAdded }) {
     setError('');
     setLoading(true);
     try {
-      await createVehicle({
+      const payload = {
         ...form,
         price: parseFloat(form.price),
         quantity: parseInt(form.quantity),
-      });
+      };
+
+      if (isEdit) {
+        await updateVehicle(editingVehicle.id, payload);
+      } else {
+        await createVehicle(payload);
+      }
       onAdded();
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to add vehicle.');
+      setError(err.response?.data?.message || `Failed to ${isEdit ? 'update' : 'add'} vehicle.`);
     } finally {
       setLoading(false);
     }
@@ -33,7 +53,9 @@ export default function AddVehicleModal({ onClose, onAdded }) {
   return (
     <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && onClose()}>
       <div className="modal">
-        <div className="modal-title">🚗 Add New Vehicle</div>
+        <div className="modal-title">
+          {isEdit ? '✏️ Edit Vehicle' : '🚗 Add New Vehicle'}
+        </div>
 
         {error && <div className="alert alert-error">⚠ {error}</div>}
 
@@ -63,14 +85,14 @@ export default function AddVehicleModal({ onClose, onAdded }) {
             </div>
             <div className="form-group">
               <label className="form-label">Quantity</label>
-              <input id="add-quantity" className="form-input" name="quantity" type="number" min={1} placeholder="10" value={form.quantity} onChange={handle} required />
+              <input id="add-quantity" className="form-input" name="quantity" type="number" min={0} placeholder="10" value={form.quantity} onChange={handle} required />
             </div>
           </div>
 
           <div className="btn-group" style={{ justifyContent: 'flex-end', marginTop: 4 }}>
             <button type="button" className="btn btn-secondary" onClick={onClose}>Cancel</button>
             <button id="add-vehicle-submit" type="submit" className="btn btn-primary" disabled={loading}>
-              {loading ? 'Adding…' : '+ Add Vehicle'}
+              {loading ? 'Saving…' : isEdit ? 'Save Changes' : '+ Add Vehicle'}
             </button>
           </div>
         </form>

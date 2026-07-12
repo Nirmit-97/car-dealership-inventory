@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { purchaseVehicle, deleteVehicle, restockVehicle } from '../api/vehicles';
 
-export default function VehicleCard({ vehicle, onUpdate }) {
+export default function VehicleCard({ vehicle, onUpdate, onEdit }) {
   const { isAdmin } = useAuth();
   const [loading, setLoading] = useState('');
   const [showRestock, setShowRestock] = useState(false);
@@ -82,6 +82,14 @@ export default function VehicleCard({ vehicle, onUpdate }) {
         {/* Admin only */}
         {isAdmin && (
           <>
+            <button
+              id={`edit-${vehicle.id}`}
+              className="btn btn-secondary btn-sm"
+              onClick={() => onEdit(vehicle)}
+              disabled={!!loading}
+            >
+              ✏️ Edit
+            </button>
             <button
               id={`restock-${vehicle.id}`}
               className="btn btn-warning btn-sm"
