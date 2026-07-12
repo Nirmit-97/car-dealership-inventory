@@ -104,8 +104,8 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
 
-        // Allow the React dev server and deployed Vercel URL
-        config.setAllowedOriginPatterns(List.of(allowedOrigins, "https://*.vercel.app"));
+        // Allow the React dev server, Swagger UI self-requests, and deployed Vercel URL
+        config.setAllowedOriginPatterns(List.of(allowedOrigins, "http://localhost:8080", "https://*.vercel.app"));
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("Authorization", "Content-Type", "Accept"));
         config.setAllowCredentials(true);
