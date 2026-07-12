@@ -41,7 +41,7 @@ public class VehicleService {
                 .build();
 
         Vehicle saved = vehicleRepository.save(vehicle);
-        return toResponse(saved);
+        return VehicleMapper.toResponse(saved);
     }
 
     /**
@@ -52,7 +52,7 @@ public class VehicleService {
     public List<VehicleResponse> getAllVehicles() {
         return vehicleRepository.findAll()
                 .stream()
-                .map(this::toResponse)
+                .map(VehicleMapper::toResponse)
                 .collect(Collectors.toList());
     }
 
@@ -65,7 +65,7 @@ public class VehicleService {
      */
     public VehicleResponse getVehicleById(String id) {
         Vehicle vehicle = findOrThrow(id);
-        return toResponse(vehicle);
+        return VehicleMapper.toResponse(vehicle);
     }
 
     /**
@@ -85,7 +85,7 @@ public class VehicleService {
 
         return vehicleRepository.searchVehicles(make, model, category, minPrice, maxPrice)
                 .stream()
-                .map(this::toResponse)
+                .map(VehicleMapper::toResponse)
                 .collect(Collectors.toList());
     }
 
@@ -108,7 +108,7 @@ public class VehicleService {
         vehicle.setQuantity(request.getQuantity());
 
         Vehicle updated = vehicleRepository.save(vehicle);
-        return toResponse(updated);
+        return VehicleMapper.toResponse(updated);
     }
 
     /**
@@ -133,20 +133,5 @@ public class VehicleService {
                 .orElseThrow(() -> new RuntimeException("Vehicle not found with id: " + id));
     }
 
-    /**
-     * Map a Vehicle JPA entity to a VehicleResponse DTO.
-     * Keeps JPA details out of the API layer.
-     */
-    private VehicleResponse toResponse(Vehicle vehicle) {
-        return VehicleResponse.builder()
-                .id(vehicle.getId())
-                .make(vehicle.getMake())
-                .model(vehicle.getModel())
-                .category(vehicle.getCategory())
-                .price(vehicle.getPrice())
-                .quantity(vehicle.getQuantity())
-                .createdAt(vehicle.getCreatedAt())
-                .updatedAt(vehicle.getUpdatedAt())
-                .build();
-    }
+    // toResponse() extracted to VehicleMapper — see VehicleMapper.java
 }

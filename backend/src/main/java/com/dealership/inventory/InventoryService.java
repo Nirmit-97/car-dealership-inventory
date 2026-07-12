@@ -1,6 +1,7 @@
 package com.dealership.inventory;
 
 import com.dealership.vehicle.Vehicle;
+import com.dealership.vehicle.VehicleMapper;
 import com.dealership.vehicle.VehicleRepository;
 import com.dealership.vehicle.VehicleResponse;
 import lombok.RequiredArgsConstructor;
@@ -50,7 +51,7 @@ public class InventoryService {
         vehicle.setQuantity(vehicle.getQuantity() - 1);
 
         Vehicle saved = vehicleRepository.save(vehicle);
-        return toResponse(saved);
+        return VehicleMapper.toResponse(saved);
     }
 
     /**
@@ -70,7 +71,7 @@ public class InventoryService {
         vehicle.setQuantity(vehicle.getQuantity() + request.getAmount());
 
         Vehicle saved = vehicleRepository.save(vehicle);
-        return toResponse(saved);
+        return VehicleMapper.toResponse(saved);
     }
 
     // ===== Private helpers =====
@@ -83,19 +84,5 @@ public class InventoryService {
                 .orElseThrow(() -> new RuntimeException("Vehicle not found with id: " + id));
     }
 
-    /**
-     * Map Vehicle JPA entity to VehicleResponse DTO.
-     */
-    private VehicleResponse toResponse(Vehicle vehicle) {
-        return VehicleResponse.builder()
-                .id(vehicle.getId())
-                .make(vehicle.getMake())
-                .model(vehicle.getModel())
-                .category(vehicle.getCategory())
-                .price(vehicle.getPrice())
-                .quantity(vehicle.getQuantity())
-                .createdAt(vehicle.getCreatedAt())
-                .updatedAt(vehicle.getUpdatedAt())
-                .build();
-    }
+    // toResponse() extracted to VehicleMapper — see VehicleMapper.java
 }
