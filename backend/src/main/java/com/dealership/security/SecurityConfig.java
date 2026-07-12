@@ -59,6 +59,13 @@ public class SecurityConfig {
 
                 // Define endpoint access rules
                 .authorizeHttpRequests(auth -> auth
+                        // SWAGGER endpoints — public
+                        .requestMatchers(
+                                "/v3/api-docs/**",
+                                "/swagger-ui/**",
+                                "/swagger-ui.html"
+                        ).permitAll()
+
                         // AUTH endpoints — public (no token needed)
                         .requestMatchers("/api/auth/**").permitAll()
 
