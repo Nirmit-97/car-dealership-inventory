@@ -3,6 +3,7 @@ package com.dealership.inventory;
 import com.dealership.vehicle.Vehicle;
 import com.dealership.vehicle.VehicleRepository;
 import com.dealership.vehicle.VehicleResponse;
+import com.dealership.vehicle.VehicleService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -20,18 +21,19 @@ import static org.mockito.Mockito.*;
 /**
  * TDD Unit Tests for InventoryService.
  *
- * RED phase: Written BEFORE InventoryService exists.
- * Expected to FAIL until InventoryService is implemented (GREEN phase).
- *
- * Covers:
- *  - purchase(): decrement quantity, throw when out of stock, throw when not found
- *  - restock() : increment quantity, throw when not found, throw on bad amount
+ * Updated in REFACTOR phase:
+ *   InventoryService now injects VehicleService (not raw VehicleRepository)
+ *   for findVehicleEntity() — this test reflects that change.
+ *   VehicleRepository is still mocked for the save() operation.
  */
 @ExtendWith(MockitoExtension.class)
 class InventoryServiceTest {
 
     @Mock
     private VehicleRepository vehicleRepository;
+
+    @Mock
+    private VehicleService vehicleService;      // ← replaces direct repository lookup
 
     @InjectMocks
     private InventoryService inventoryService;
@@ -48,7 +50,7 @@ class InventoryServiceTest {
                 .model("Camry")
                 .category("Sedan")
                 .price(25000.00)
-                .quantity(5)        // has stock
+                .quantity(5)
                 .build();
 
         outOfStockVehicle = Vehicle.builder()
@@ -57,7 +59,7 @@ class InventoryServiceTest {
                 .model("F-150")
                 .category("Truck")
                 .price(40000.00)
-                .quantity(0)        // out of stock
+                .quantity(0)
                 .build();
     }
 
@@ -69,48 +71,41 @@ class InventoryServiceTest {
     @DisplayName("purchase: should decrement quantity by 1 when vehicle is in stock")
     void purchase_shouldDecrementQuantity_whenInStock() {
         // ARRANGE
-        when(vehicleRepository.findById("v-001")).thenReturn(Optional.of(inStockVehicle));
+        when(vehicleService.findVehicleEntity("v-001")).thenReturn(inStockVehicle);
 
-        // After save, quantity should be 4 (5 - 1)
         Vehicle afterPurchase = Vehicle.builder()
-                .id("v-001")
-                .make("Toyota")
-                .model("Camry")
-                .category("Sedan")
-                .price(25000.00)
-                .quantity(4)
-                .build();
+                .id("v-001").make("Toyota").model("Camry")
+                .category("Sedan").price(25000.00).quantity(4).build();
         when(vehicleRepository.save(any(Vehicle.class))).thenReturn(afterPurchase);
 
         // ACT
         VehicleResponse response = inventoryService.purchase("v-001");
 
         // ASSERT
-        assertThat(response).isNotNull();
-        assertThat(response.getQuantity()).isEqualTo(4); // decremented by 1
+        assertThat(response.getQuantity()).isEqualTo(4);
         verify(vehicleRepository, times(1)).save(any(Vehicle.class));
     }
 
     @Test
-    @DisplayName("purchase: should throw RuntimeException when vehicle is out of stock (quantity = 0)")
+    @DisplayName("purchase: should throw RuntimeException when vehicle is out of stock")
     void purchase_shouldThrow_whenQuantityIsZero() {
         // ARRANGE
-        when(vehicleRepository.findById("v-002")).thenReturn(Optional.of(outOfStockVehicle));
+        when(vehicleService.findVehicleEntity("v-002")).thenReturn(outOfStockVehicle);
 
         // ACT + ASSERT
         assertThatThrownBy(() -> inventoryService.purchase("v-002"))
                 .isInstanceOf(RuntimeException.class)
                 .hasMessageContaining("out of stock");
 
-        // Critical: must never save when out of stock
         verify(vehicleRepository, never()).save(any());
     }
 
     @Test
-    @DisplayName("purchase: should throw RuntimeException when vehicle ID does not exist")
+    @DisplayName("purchase: should throw RuntimeException when vehicle ID not found")
     void purchase_shouldThrow_whenVehicleNotFound() {
-        // ARRANGE
-        when(vehicleRepository.findById("bad-id")).thenReturn(Optional.empty());
+        // ARRANGE — VehicleService throws on bad ID
+        when(vehicleService.findVehicleEntity("bad-id"))
+                .thenThrow(new RuntimeException("Vehicle not found with id: bad-id"));
 
         // ACT + ASSERT
         assertThatThrownBy(() -> inventoryService.purchase("bad-id"))
@@ -128,17 +123,11 @@ class InventoryServiceTest {
     @DisplayName("restock: should increment quantity by the given amount")
     void restock_shouldIncrementQuantityByAmount() {
         // ARRANGE
-        when(vehicleRepository.findById("v-001")).thenReturn(Optional.of(inStockVehicle));
+        when(vehicleService.findVehicleEntity("v-001")).thenReturn(inStockVehicle);
 
-        // After restock by 10, quantity = 5 + 10 = 15
         Vehicle afterRestock = Vehicle.builder()
-                .id("v-001")
-                .make("Toyota")
-                .model("Camry")
-                .category("Sedan")
-                .price(25000.00)
-                .quantity(15)
-                .build();
+                .id("v-001").make("Toyota").model("Camry")
+                .category("Sedan").price(25000.00).quantity(15).build();
         when(vehicleRepository.save(any(Vehicle.class))).thenReturn(afterRestock);
 
         // ACT
@@ -146,25 +135,19 @@ class InventoryServiceTest {
         VehicleResponse response = inventoryService.restock("v-001", request);
 
         // ASSERT
-        assertThat(response).isNotNull();
-        assertThat(response.getQuantity()).isEqualTo(15); // 5 + 10
+        assertThat(response.getQuantity()).isEqualTo(15);
         verify(vehicleRepository, times(1)).save(any(Vehicle.class));
     }
 
     @Test
-    @DisplayName("restock: should also work for a previously out-of-stock vehicle")
+    @DisplayName("restock: should restore a previously out-of-stock vehicle")
     void restock_shouldWork_forOutOfStockVehicle() {
         // ARRANGE
-        when(vehicleRepository.findById("v-002")).thenReturn(Optional.of(outOfStockVehicle));
+        when(vehicleService.findVehicleEntity("v-002")).thenReturn(outOfStockVehicle);
 
         Vehicle afterRestock = Vehicle.builder()
-                .id("v-002")
-                .make("Ford")
-                .model("F-150")
-                .category("Truck")
-                .price(40000.00)
-                .quantity(20)
-                .build();
+                .id("v-002").make("Ford").model("F-150")
+                .category("Truck").price(40000.00).quantity(20).build();
         when(vehicleRepository.save(any(Vehicle.class))).thenReturn(afterRestock);
 
         // ACT
@@ -172,15 +155,16 @@ class InventoryServiceTest {
         VehicleResponse response = inventoryService.restock("v-002", request);
 
         // ASSERT
-        assertThat(response.getQuantity()).isEqualTo(20); // 0 + 20
+        assertThat(response.getQuantity()).isEqualTo(20);
         verify(vehicleRepository).save(any(Vehicle.class));
     }
 
     @Test
-    @DisplayName("restock: should throw RuntimeException when vehicle ID does not exist")
+    @DisplayName("restock: should throw RuntimeException when vehicle ID not found")
     void restock_shouldThrow_whenVehicleNotFound() {
-        // ARRANGE
-        when(vehicleRepository.findById("bad-id")).thenReturn(Optional.empty());
+        // ARRANGE — VehicleService throws on bad ID
+        when(vehicleService.findVehicleEntity("bad-id"))
+                .thenThrow(new RuntimeException("Vehicle not found with id: bad-id"));
 
         // ACT + ASSERT
         RestockRequest request = new RestockRequest(5);

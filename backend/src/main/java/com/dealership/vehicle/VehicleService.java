@@ -64,7 +64,7 @@ public class VehicleService {
      * @throws RuntimeException if vehicle not found
      */
     public VehicleResponse getVehicleById(String id) {
-        Vehicle vehicle = findOrThrow(id);
+        Vehicle vehicle = findVehicleEntity(id);
         return VehicleMapper.toResponse(vehicle);
     }
 
@@ -98,7 +98,7 @@ public class VehicleService {
      * @throws RuntimeException if vehicle not found
      */
     public VehicleResponse updateVehicle(String id, VehicleRequest request) {
-        Vehicle vehicle = findOrThrow(id);
+        Vehicle vehicle = findVehicleEntity(id);
 
         // Apply updates — only modify what's provided
         vehicle.setMake(request.getMake());
@@ -118,17 +118,22 @@ public class VehicleService {
      * @throws RuntimeException if vehicle not found
      */
     public void deleteVehicle(String id) {
-        Vehicle vehicle = findOrThrow(id);
+        Vehicle vehicle = findVehicleEntity(id);
         vehicleRepository.delete(vehicle);
     }
 
     // ===== Private helpers =====
 
     /**
-     * Find a vehicle by ID or throw a descriptive RuntimeException.
-     * Centralizes the not-found logic to avoid duplication.
+     * Find a vehicle entity by ID or throw a descriptive RuntimeException.
+     *
+     * Public so InventoryService can reuse this lookup without duplicating it.
+     * This eliminates the identical findOrThrow() that previously lived in both services.
+     *
+     * REFACTOR: centralize vehicle lookup — single place to change the error message
+     * or swap the repository call in the future.
      */
-    private Vehicle findOrThrow(String id) {
+    public Vehicle findVehicleEntity(String id) {
         return vehicleRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Vehicle not found with id: " + id));
     }

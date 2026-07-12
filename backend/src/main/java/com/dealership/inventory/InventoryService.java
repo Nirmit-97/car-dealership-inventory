@@ -4,6 +4,7 @@ import com.dealership.vehicle.Vehicle;
 import com.dealership.vehicle.VehicleMapper;
 import com.dealership.vehicle.VehicleRepository;
 import com.dealership.vehicle.VehicleResponse;
+import com.dealership.vehicle.VehicleService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -18,13 +19,16 @@ import org.springframework.transaction.annotation.Transactional;
  * @Transactional ensures that quantity updates are atomic —
  * no partial saves if something fails mid-operation.
  *
- * Implemented AFTER InventoryServiceTest (TDD GREEN phase).
+ * REFACTOR: findOrThrow() was duplicated from VehicleService.
+ * Now delegates to VehicleService.findVehicleEntity() — single source of truth
+ * for the "vehicle not found" lookup and error message.
  */
 @Service
 @RequiredArgsConstructor
 public class InventoryService {
 
     private final VehicleRepository vehicleRepository;
+    private final VehicleService vehicleService;   // ← replaces duplicate findOrThrow()
 
     /**
      * Purchase a vehicle — decrements its quantity by 1.
@@ -39,8 +43,8 @@ public class InventoryService {
      */
     @Transactional
     public VehicleResponse purchase(String vehicleId) {
-        // Find vehicle or fail with a clear message
-        Vehicle vehicle = findOrThrow(vehicleId);
+        // Delegate lookup to VehicleService — no duplicate findOrThrow
+        Vehicle vehicle = vehicleService.findVehicleEntity(vehicleId);
 
         // Business rule: cannot purchase if out of stock
         if (vehicle.getQuantity() <= 0) {
@@ -65,7 +69,8 @@ public class InventoryService {
      */
     @Transactional
     public VehicleResponse restock(String vehicleId, RestockRequest request) {
-        Vehicle vehicle = findOrThrow(vehicleId);
+        // Delegate lookup to VehicleService — no duplicate findOrThrow
+        Vehicle vehicle = vehicleService.findVehicleEntity(vehicleId);
 
         // Add the restock amount to current quantity
         vehicle.setQuantity(vehicle.getQuantity() + request.getAmount());
@@ -74,15 +79,6 @@ public class InventoryService {
         return VehicleMapper.toResponse(saved);
     }
 
-    // ===== Private helpers =====
-
-    /**
-     * Find a vehicle by ID or throw a descriptive exception.
-     */
-    private Vehicle findOrThrow(String id) {
-        return vehicleRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Vehicle not found with id: " + id));
-    }
-
-    // toResponse() extracted to VehicleMapper — see VehicleMapper.java
+    // toResponse()    extracted to VehicleMapper   — see VehicleMapper.java
+    // findOrThrow()   extracted to VehicleService  — see VehicleService.findVehicleEntity()
 }
