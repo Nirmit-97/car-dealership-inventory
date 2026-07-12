@@ -161,10 +161,10 @@ class VehicleServiceTest {
     // =========================================================
 
     @Test
-    @DisplayName("searchVehicles: should return filtered results by make")
+    @DisplayName("searchVehicles: should return filtered results using Specification")
     void searchVehicles_shouldReturnFilteredResults() {
-        // ARRANGE
-        when(vehicleRepository.searchVehicles("Toyota", null, null, null, null))
+        // ARRANGE — Specification-based findAll() is mocked
+        when(vehicleRepository.findAll(any(org.springframework.data.jpa.domain.Specification.class)))
                 .thenReturn(List.of(sampleVehicle));
 
         // ACT
@@ -179,7 +179,7 @@ class VehicleServiceTest {
     @DisplayName("searchVehicles: should return empty list when no matches found")
     void searchVehicles_shouldReturnEmpty_whenNoMatch() {
         // ARRANGE
-        when(vehicleRepository.searchVehicles("BMW", null, null, null, null))
+        when(vehicleRepository.findAll(any(org.springframework.data.jpa.domain.Specification.class)))
                 .thenReturn(List.of());
 
         // ACT
@@ -193,7 +193,7 @@ class VehicleServiceTest {
     @DisplayName("searchVehicles: should filter by price range")
     void searchVehicles_shouldFilterByPriceRange() {
         // ARRANGE
-        when(vehicleRepository.searchVehicles(null, null, null, 20000.0, 30000.0))
+        when(vehicleRepository.findAll(any(org.springframework.data.jpa.domain.Specification.class)))
                 .thenReturn(List.of(sampleVehicle));
 
         // ACT
@@ -278,6 +278,6 @@ class VehicleServiceTest {
                 .isInstanceOf(RuntimeException.class)
                 .hasMessageContaining("Vehicle not found");
 
-        verify(vehicleRepository, never()).delete(any());
+        verify(vehicleRepository, never()).delete(any(Vehicle.class));
     }
 }

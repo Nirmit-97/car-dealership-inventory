@@ -83,7 +83,8 @@ public class VehicleService {
             String make, String model, String category,
             Double minPrice, Double maxPrice) {
 
-        return vehicleRepository.searchVehicles(make, model, category, minPrice, maxPrice)
+        return vehicleRepository
+                .findAll(VehicleSpecification.withFilters(make, model, category, minPrice, maxPrice))
                 .stream()
                 .map(VehicleMapper::toResponse)
                 .collect(Collectors.toList());
