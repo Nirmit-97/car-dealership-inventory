@@ -36,16 +36,16 @@ AutoVault is a premium, secure, and production-ready Web Application designed fo
 
 ```mermaid
 graph TD
-    subgraph Client Layer (Frontend)
+    subgraph ClientLayer ["Client Layer (Frontend)"]
         A[React App] -->|Axios REST Calls| B[JWT Request Interceptor]
     end
-    subgraph Server Layer (Backend)
+    subgraph ServerLayer ["Server Layer (Backend)"]
         B -->|HTTP Requests| C[Spring Security Filter Chain]
         C -->|Valid Token| D[JWT Auth Filter]
         D -->|Authenticated Context| E[Spring REST Controllers]
         E -->|Service Logic & Specs| F[JPA Repositories]
     end
-    subgraph Database Layer
+    subgraph DatabaseLayer ["Database Layer"]
         F -->|Hibernate SQL Operations| G[PostgreSQL Neon Cloud / H2]
     end
 ```
