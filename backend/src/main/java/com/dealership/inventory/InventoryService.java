@@ -46,10 +46,8 @@ public class InventoryService {
         // Delegate lookup to VehicleService — no duplicate findOrThrow
         Vehicle vehicle = vehicleService.findVehicleEntity(vehicleId);
 
-        // Business rule: cannot purchase if out of stock
-        if (vehicle.getQuantity() <= 0) {
-            throw new RuntimeException("Vehicle is out of stock");
-        }
+        // Business rule delegated to StockValidator — named, reusable, testable
+        StockValidator.validateInStock(vehicle);
 
         // Decrement quantity by exactly 1
         vehicle.setQuantity(vehicle.getQuantity() - 1);
