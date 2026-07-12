@@ -52,6 +52,40 @@ graph TD
 
 ---
 
+## 📁 Project Directory Structure
+
+```text
+├── backend
+│   ├── src
+│   │   ├── main
+│   │   │   ├── java/com/dealership
+│   │   │   │   ├── auth (JWT validations & Auth Services)
+│   │   │   │   ├── config (DatabaseSeeder & OpenAPI configuration)
+│   │   │   │   ├── exception (Global Error Handler & ErrorResponse)
+│   │   │   │   ├── inventory (Inventory purchase & restock metrics logic)
+│   │   │   │   ├── security (Custom JwtAuthFilter & Security Chain gates)
+│   │   │   │   ├── user (User entities, repository, and roles)
+│   │   │   │   └── vehicle (Vehicle CRUD & Specification search controllers)
+│   │   │   └── resources (application.yml properties)
+│   │   └── test/java/com/dealership (34 Integration / Mock Unit Tests)
+│   └── pom.xml
+│   └── .env.example
+├── frontend
+│   ├── src
+│   │   ├── api (Axios Client configurations & REST routes)
+│   │   ├── components (Sidebar, AddVehicleModal, and VehicleCard)
+│   │   ├── context (AuthContext state persistence)
+│   │   ├── pages (LoginPage & InventoryPage dashboard views)
+│   │   ├── App.jsx (Routes & security redirects)
+│   │   └── index.css (Responsive design system)
+│   ├── vercel.json (Vercel config redirects)
+│   └── package.json
+│   └── .env.example
+└── README.md
+```
+
+---
+
 ## 🚀 Features
 
 ### 1. Authentication & Session Persistence
@@ -88,14 +122,26 @@ graph TD
 ## ⚙️ Setup & Installation
 
 ### Prerequisite Environment Variables
-Prepare a `.env` file in the project directories:
 
+Create locally ignored environment configurations based on templates located in both project directories:
+
+#### **Backend (`backend/.env`)**
+Copy `backend/.env.example` to `backend/.env`:
 ```env
-DATABASE_URL=jdbc:postgresql://<neon_db_url>?sslmode=require
-JWT_SECRET=your_super_secret_signing_key_32_chars_or_more
-SPRING_PROFILES_ACTIVE=local
+DATABASE_URL=jdbc:postgresql://<neon_db_host>/neondb?sslmode=require
+DB_USERNAME=your_database_username
+DB_PASSWORD=your_database_password
+JWT_SECRET=your_super_secret_jwt_key_minimum_32_characters_long
 PORT=8080
+CORS_ALLOWED_ORIGINS=http://localhost:5173
 ```
+
+#### **Frontend (`frontend/.env`)**
+Copy `frontend/.env.example` to `frontend/.env`:
+```env
+VITE_API_URL=http://localhost:8080
+```
+
 
 ### 1. Database Setup
 Ensure you have a running PostgreSQL database (e.g. Neon PostgreSQL). The database schema is automatically initialized on startup by Hibernate (`ddl-auto: update`).
@@ -155,14 +201,20 @@ The codebase is fully validated with **34 automated tests** covering service bus
 
 ## 📸 Screenshots
 
-### 🔑 Login / Registration Screen
+### 🔑 Login Screen
 ![AutoVault Login Page](docs/images/login.png)
 
-### 📊 Admin Dashboard View (Full CRUD Controls & System Metrics)
+### 📝 User Registration Screen
+![AutoVault Register Page](docs/images/register.png)
+
+### 📊 Admin Dashboard & Stock Operations
 ![AutoVault Admin Dashboard](docs/images/dashboard.png)
 
-### 📝 OpenApi interactive Swagger Interface
-![AutoVault OpenApi Swagger Docs](docs/images/swagger.png)
+### 🔍 Criteria Search Filters (Filtered Output)
+![AutoVault Search Results](docs/images/search.png)
+
+### 📖 OpenAPI Swagger Interface
+![AutoVault OpenAPI Swagger Docs](docs/images/swagger.png)
 
 ---
 
